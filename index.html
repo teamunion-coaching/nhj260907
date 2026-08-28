@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>내신 카운트다운</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --paper:#F2F1EA; --card:#FFFFFF; --ink:#16211C; --ink2:#5A665F; --ink3:#939E97;
+  --line:#E1E5DC; --deep:#22453A; --brand:#0B8A6E; --brand-bg:#E6F5F0;
+  --done:#1F9D6B; --done-bg:#E4F4EC; --miss:#B7BEB8;
+  --warn:#D2544A; --warn-bg:#FBEAE8;
+  --red:#D2544A; --red-bg:#FBEAE8; --yellow:#C6892B; --yellow-bg:#FAF1DE; --green:#1F9D6B; --green-bg:#E4F4EC;
+  --sub-eng:#2F6FB0; --sub-kor:#B0562F; --sub-math:#3E7C4F; --sub-memo:#8A6D3B; --sub-etc:#5A665F;
+  --now:#0B8A6E; --now-bg:#E6F5F0;
+  --sans:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:640px;margin:0 auto;padding:0 15px 150px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3)}
+
+/* header */
+header{padding:16px 12px 12px;position:sticky;top:0;background:var(--paper);z-index:30;margin:0 -12px;box-shadow:0 6px 10px -8px rgba(22,33,28,.18);border-bottom:1px solid var(--line)}
+h1{font-size:21px;font-weight:800;letter-spacing:-.02em;margin:6px 0 2px}
+h1 em{font-style:normal;color:var(--brand)}
+.meta{color:var(--ink2);font-size:13px}
+.namebox{display:flex;align-items:center;gap:8px;margin:2px 0 4px}
+.namebox label{font-size:12px;font-weight:800;color:var(--deep);white-space:nowrap}
+.namebox input{flex:1;max-width:180px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:var(--sans);font-size:15px;font-weight:700;color:var(--ink)}
+.namebox input:focus{outline:none;border-color:var(--brand)}
+.ddaywrap{display:flex;align-items:baseline;gap:10px;margin:8px 0 2px}
+.dday{font-family:var(--mono);font-weight:800;font-size:30px;color:var(--deep);letter-spacing:-.02em}
+.dday small{font-size:14px;color:var(--ink3);font-weight:700;margin-left:2px}
+.examdate{font-size:12.5px;color:var(--ink2)}
+.mode{margin:8px 0 2px;background:var(--warn-bg);border:1px solid #F1C9C4;color:#A23A31;border-radius:11px;padding:8px 11px;font-size:12.5px}
+.pbar{margin-top:11px;background:#E7EAE3;border-radius:99px;height:12px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,#2ABF8E,#0B8A6E);width:0;transition:width .3s}
+.pnum{display:flex;justify-content:space-between;align-items:baseline;margin-top:6px}
+.pnum b{font-size:19px;font-weight:800;color:var(--deep)}
+.pnum span{font-size:12px;color:var(--ink3)}
+
+/* phase stepper */
+.stepper{display:flex;gap:6px;margin:16px 0 4px}
+.step{flex:1;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:8px 4px;position:relative}
+.step .pc{font-family:var(--mono);font-size:11px;font-weight:800;color:var(--ink3)}
+.step .pn{font-size:11.5px;font-weight:700;color:var(--ink2);margin-top:2px;line-height:1.25}
+.step.on{background:var(--now-bg);border-color:#9FD8C8}
+.step.on .pc{color:var(--brand)}
+.step.on .pn{color:var(--deep)}
+.step.done .pc:after{content:" ✓";color:var(--done)}
+
+/* section title */
+.stitle{display:flex;align-items:center;gap:8px;margin:22px 2px 8px}
+.stitle h2{font-size:14px;font-weight:800;color:var(--deep);margin:0;letter-spacing:-.01em}
+.stitle .line{flex:1;height:1px;background:var(--line)}
+.stitle .hint{font-size:11px;color:var(--ink3);font-weight:600}
+
+/* read counters */
+.reads{display:flex;flex-direction:column;gap:9px}
+.readrow{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:10px 13px}
+.readrow .rname{font-weight:800;font-size:14px;display:flex;align-items:center;gap:7px}
+.readrow .rlab{font-size:11.5px;color:var(--ink3);font-weight:600}
+.readrow .rctl{margin-left:auto;display:flex;align-items:center;gap:9px}
+.stepbtn{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:#FAFBF8;font-size:19px;font-weight:800;color:var(--deep);line-height:1;display:flex;align-items:center;justify-content:center}
+.stepbtn:active{background:var(--brand-bg)}
+.rcount{font-family:var(--mono);font-weight:800;font-size:15px;min-width:52px;text-align:center}
+.rcount b{color:var(--brand)} .rcount.full b{color:var(--done)}
+
+/* coach tip cards */
+.tipcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:14px 15px;margin:11px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.tiphead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tsubname{font-size:15.5px;font-weight:800;color:var(--deep);display:flex;align-items:center;gap:7px}
+.lv{font-size:10px;font-weight:800;padding:2px 8px;border-radius:99px}
+.lv-red{background:var(--red-bg);color:var(--red)} .lv-yellow{background:var(--yellow-bg);color:var(--yellow)} .lv-green{background:var(--green-bg);color:var(--green)}
+.wklabel{font-size:11.5px;font-weight:800;color:var(--warn);margin:10px 0 3px}
+.wkedit{width:100%;border:1px dashed #E0C4C0;background:#FDF6F5;border-radius:9px;padding:8px 11px;font-family:var(--sans);font-size:13.5px;color:var(--ink);resize:vertical;min-height:38px}
+.wkedit:focus{outline:none;border-color:var(--warn);border-style:solid;background:#fff}
+.tiplab{font-size:12px;font-weight:800;color:var(--brand);margin:11px 0 4px;display:flex;align-items:center;gap:6px}
+.tiplist{margin:0;padding-left:2px;list-style:none}
+.tiplist li{font-size:13.5px;color:var(--ink);margin:5px 0;padding-left:16px;position:relative;line-height:1.5}
+.tiplist li:before{content:"·";position:absolute;left:4px;color:var(--brand);font-weight:900}
+.approach{margin-top:11px;background:#F3F7FB;border:1px solid #D7E4F1;border-radius:11px;padding:10px 12px}
+.approach .ahd{font-size:12.5px;font-weight:800;color:var(--sub-eng);display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.approach ol{margin:0;padding-left:20px}
+.approach li{font-size:13px;color:#254B6B;margin:4px 0}
+
+/* week card */
+.week{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px 15px 13px;margin:13px 0;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.week.now{border-color:#9FD8C8;box-shadow:0 0 0 2px var(--now-bg)}
+.whead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wno{font-weight:800;font-size:16px;color:var(--deep)}
+.wdate{font-size:12px;color:var(--ink3);font-family:var(--mono)}
+.wphase{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--brand-bg);color:var(--brand)}
+.nowtag{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:var(--now);color:#fff}
+.wrate{margin-left:auto;font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink3)}
+.wgoal{font-size:13.5px;color:var(--ink2);margin:8px 0 2px;background:#FAFBF8;border:1px solid var(--line);border-radius:10px;padding:8px 11px}
+.wgoal b{color:var(--deep)}
+.block{margin-top:11px}
+.blab{font-size:12px;font-weight:800;color:var(--deep);display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.blab .tag{font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px}
+.tag-wd{background:var(--brand-bg);color:var(--brand)} .tag-we{background:#EDEAF7;color:#6B54C6}
+.task{display:flex;align-items:flex-start;gap:10px;padding:8px 4px;border-top:1px solid #F0F2ED;cursor:pointer}
+.task:first-of-type{border-top:none}
+.cb{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.cb svg{width:13px;height:13px;opacity:0;transform:scale(.5);transition:.15s}
+.task.done .cb{background:var(--done);border-color:var(--done)}
+.task.done .cb svg{opacity:1;transform:scale(1)}
+.task.done .ttext{color:var(--ink3);text-decoration:line-through}
+.tsub{font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:99px;color:#fff;flex:none;margin-top:2px}
+.s-eng{background:var(--sub-eng)}.s-kor{background:var(--sub-kor)}.s-math{background:var(--sub-math)}.s-memo{background:var(--sub-memo)}.s-etc{background:var(--sub-etc)}
+.ttext{font-size:13.5px;line-height:1.45}
+
+/* editable blocks */
+.editblock{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 14px;margin:10px 0}
+.editblock label{font-size:12.5px;font-weight:800;color:var(--deep);display:block;margin-bottom:6px}
+.editblock textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-family:var(--sans);font-size:13.5px;resize:vertical;min-height:56px;color:var(--ink)}
+.editblock textarea:focus{outline:none;border-color:var(--brand)}
+
+/* footer bar */
+.footbar{position:fixed;left:0;right:0;bottom:0;background:rgba(242,241,234,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line);z-index:40}
+.footinner{max-width:640px;margin:0 auto;padding:10px 15px;display:flex;align-items:center;gap:10px}
+.saved{font-size:12px;color:var(--ink3);font-family:var(--mono)}
+.saved b{color:var(--done)}
+.submitbtn{margin-left:auto;font-size:13.5px;font-weight:800;color:#fff;background:var(--brand);border:none;border-radius:10px;padding:10px 16px;box-shadow:0 2px 6px rgba(11,138,110,.28)}
+.submitbtn:active{background:#097056}
+.resetbtn{font-size:12px;font-weight:700;color:var(--ink2);background:none;border:1px solid var(--line);border-radius:9px;padding:8px 11px}
+.resetbtn:active{background:var(--warn-bg);color:var(--warn);border-color:#F1C9C4}
+.toast{position:fixed;left:50%;bottom:78px;transform:translateX(-50%) translateY(20px);background:var(--deep);color:#fff;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:700;opacity:0;transition:.3s;z-index:60;pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="eyebrow">내신 카운트다운</div>
+    <h1 id="title"></h1>
+    <div class="namebox"><label for="nameInput">이름</label><input id="nameInput" type="text" placeholder="이름을 입력하세요" autocomplete="off"></div>
+    <div class="meta" id="submeta"></div>
+    <div class="ddaywrap"><div class="dday" id="dday">D-–</div><div class="examdate" id="examdate"></div></div>
+    <div class="mode" id="mode" style="display:none"></div>
+    <div class="pbar"><div class="pfill" id="pfill"></div></div>
+    <div class="pnum"><b id="ppct">0%</b><span id="pdetail"></span></div>
+    <div class="stepper" id="stepper"></div>
+  </header>
+
+  <div class="stitle" id="readstitle" style="display:none"><h2>회독 진행</h2><div class="line"></div><span class="hint">공부할 때마다 ＋</span></div>
+  <div class="reads" id="reads"></div>
+
+  <div class="stitle"><h2 id="tiptitle">코치의 팁!</h2><div class="line"></div><span class="hint">약점은 직접 고쳐도 돼요</span></div>
+  <div id="tips"></div>
+
+  <div class="stitle"><h2>주차별 계획</h2><div class="line"></div><span class="hint">한 것에 체크</span></div>
+  <div id="weeks"></div>
+
+  <div class="stitle"><h2>강점 · 메모</h2><div class="line"></div></div>
+  <div class="editblock">
+    <label for="strengths">내 강점 · 자신 있는 것 (선택)</label>
+    <textarea id="strengths" placeholder="예: 영어 듣기, 수학 계산은 자신 있어요."></textarea>
+  </div>
+  <div class="editblock">
+    <label for="note">이번 구간 컨디션 · 못한 것 · 코치에게 남길 말</label>
+    <textarea id="note" placeholder="예: 이번 주 수학이 밀렸어요. 통합사회는 재밌었어요."></textarea>
+  </div>
+</div>
+
+<div class="footbar"><div class="footinner">
+  <div class="saved" id="saved">자동 저장 <b>✓</b></div>
+  <button class="resetbtn" id="reset">초기화</button>
+  <button class="submitbtn" id="submit">📤 제출 파일 만들기</button>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA = {"student": "ㄴ○주", "grade": "고2", "school": "강서고", "exam_name": "2학기 중간고사", "exam_start": "2026-10-06", "generated_on": "2026-08-25", "course": "4주", "consultant": "팀유니온", "mode_note": "가용시간 : 월4.5·화3·수2.5·목3.5·금4.5·토0·일1 (주간 19h)", "strengths": "국어(문학)가 지난 기말 2등급 A·편차 +9.2, 모의 국어 3회 연속 1등급의 확실한 강점 — 유지 구간. 일본어는 응시집단이 낮아 석차는 2등급이지만 지필이 크게 흔들렸다. 보완 구간은 수학(미적분2·대수)·영어의 '서답형 과정·표기 완결'과 역학과 에너지의 '개념 재현'. 실점의 핵심은 개념 공백보다 서답형 완결성(미적 서답형 5/24·영어 서답형 0/17)과 후반 고배점 마무리다. 전과목 가중평균 2.64등급 → 목표 2등급. (자신 있는 것·못한 것을 여기에 직접 적어도 좋아.)", "subjects": [{"name": "미적분2", "key": "math", "level": "red", "weakness": "1학기 미적분I 서답형 5/24(21%)·고배점 선택형 4문항(4.4·5.1·5.2·5.4) 오답 — 판정 미극복(정체). 원인축 T7(풀이 전략·과정): 개념·계산은 강점이라 '몰라서'가 아니라 '과정을 기준대로 못 써서' 흘린다. 이수단위 4로 가중치 최대 — 여기서의 1등급 개선이 평균에 가장 큰 지렛대. (직접 다듬어도 돼)", "goal_reads": 3, "read_label": "개념·문제 회독", "tips": ["개념·계산은 이미 강점이니 '양'보다 백지 복기로 정의·조건을 재현하는 질 관리를 하자. 교과서·부교재 예제와 그 변형이 내신 서답형의 원천이다.", "자주 나오는 서답형을 유형별로 모아 '표준 서술 틀'을 만들자 — 식 유도 단계마다 근거 한 줄, 정의역·조건 명시, 마지막 줄에 답+단위.", "학교 기출로 반복 출제 개념·준킬러 유형을 분석하고, 배점 큰 서답형을 제한 시간 안에 논리적으로 쓰는 연습을 따로 반복하자(배부된 문제은행 준킬러 세트 활용)."], "approach": ["서답형은 식 전개 각 단계의 근거를 한 줄씩 적고, 정의역·조건·단위를 명시한 뒤 마지막 줄에 답+단위를 쓴다(부분점수 단위로 요소를 나눠 하나도 빠뜨리지 않는다).", "시험 당일 배점 큰 서답형을 먼저 풀고, 고배점 선택형은 조건을 그림·표로 가시화한 뒤 접근을 설계한다.", "검산 습관으로 조건 해석 실수(정의역·부호)를 마지막에 다시 점검한다."]}, {"name": "영어", "key": "eng", "level": "red", "weakness": "1학기 영어I 서답형 0/17(완전 실점) + 선택형 12문항 광범위 실점 — 기말 지필 44.6으로 급락, 판정 미극복. 원인축 T7(영작 완결성)+T2(논지·흐름). 듣기·말하기는 모의 만점권이나 쓰기·읽기 심화에서 무너졌다. 범위 지문 정밀 학습으로 한 단계 끌어올리자. (직접 다듬어도 돼)", "goal_reads": 3, "read_label": "지문 학습(정독·이해)·문제 회독", "tips": ["시험 범위(교과서·부교재·유인물) 지문을 3~4주 전부터 '지문 분석 노트'(질문→해석→모르는 단어·문법 체크)로 정리하자(내신 영어는 출제 지문이 정해져 있다).", "교과서 지문은 한글 해석을 보고 영어로 써 보는 영작·암기로 정독을 굳히자. 도치·비교급 등 서술형 빈출 구조 문장은 반복해 써서 완벽히 영작할 수 있게 하자(서답형 0점 방어의 핵심).", "주제 한 문장 요약 + 흐름 화살표로 순서·삽입·무관문장을 대비하고, 배부된 문제은행 간접쓰기 세트(순서·삽입·요약)를 회차별로 누적 연습하자."], "approach": ["서답형(영작)을 시험 당일 먼저 푼다 — 배점이 크고 시간이 부족하면 통째로 흘리기 쉽다.", "순서·삽입은 지시어·연결어·대명사의 지칭을 먼저 표시해 앞뒤 관계를 확정한 뒤 배열한다.", "선택형은 첫·끝 문장과 역접(however/but) 뒤 문장부터 표시해 대의를 잡는다.", "영작 어법 오류(도치·비교급·수일치)는 본문 기반으로 암기하고, 조건(단어 수·어형)은 발문에 밑줄→답안 끝에 대조한다."]}, {"name": "대수", "key": "math", "level": "red", "weakness": "수학 교과 공통 약점(서답형 과정 서술 완결성·후반 고배점, T7)을 이월한 과목. 1학기 기하는 서답형 11/24(46%)·후반 고배점 선택형이 최대 실점처였다(방향은 51.1→71.3으로 개선 중). 대수는 새 단원이라 개념은 새로 잡되, 서답형 서술 틀은 미적분과 공유하자. (직접 다듬어도 돼)", "goal_reads": 3, "read_label": "개념·문제 회독", "tips": ["식·도형 계열 서답형은 '조건 정리 → 그림·표로 시각화 → 식 세우기' 순서를 고정해 서술 틀로 만들자.", "미적분2와 같은 서답형 표준 서술 틀(근거·조건·단위)을 공유해 두 과목을 함께 훈련하자.", "후반 고배점 문항은 학교 기출 변형으로 유형을 익히고 오답을 유형별로 재정리하자."], "approach": ["서답형은 필요한 단서만 구하고(모든 값을 구하려 하지 않음) 단계별 근거를 적는다.", "후반 고배점 선택형은 시간을 남겨 검산 — 부호·대입 실수를 마지막에 점검한다.", "서답형은 식→대입→결론을 줄 나눠 남기고, 조건을 답안 서두에 명시한다."]}, {"name": "역학과 에너지", "key": "memo", "level": "red", "weakness": "1학기 물리학 25문항 중 12문항 광범위 실점(−49.1)·성취도 D — 판정 미극복(정체), 방향은 41.2→50.9로 개선. 원인축 T1(개념·원리): 전용 자습 0h로 개념을 스스로 재현할 시간이 부족했다. 평균에 붙은 편차(+0.1)라 조금만 흔들려도 등급이 내려가는 취약 구간. (직접 다듬어도 돼)", "goal_reads": 3, "read_label": "개념·문제 회독", "tips": ["과학학원 직후 30분 개념 복기 블록을 신설해 배운 개념을 그날 백지에 재현하자(도식화·구조도로 공간지각 보완).", "개념을 철저히 익힌 뒤 쉬운 문제부터 단계적으로 풀고, 계산형은 공식·정의를 백지 암기로 재현한 뒤 대입하자.", "학교 유형(암기형/서술형)을 기출로 파악하고 오답노트로 자료해석 실수를 관리하자."], "approach": ["자료·그래프 문항은 축·단위·조건을 먼저 확인해 해석 실수를 막는다.", "계산형은 정의·공식을 먼저 적고 대입한다 — 암산으로 건너뛰지 않는다.", "여러 대상을 하나의 계로 묶는 유형은 관계도(자유물체도 등)를 먼저 그린 뒤 식을 세운다."]}, {"name": "일본어 회화", "key": "etc", "level": "yellow", "weakness": "1학기 일본어 중간 지필 93.2→기말 29.6 폭락·서답형 4/30 — 판정 새 약점. 원인축 T6(암기·어휘): 표기·어휘 정확도. 붕괴 원인(범위 대비 부족/컨디션)은 확인 필요. 응시집단이 낮아 석차는 2등급이지만 지필 붕괴는 분명한 경고다. (직접 다듬어도 돼)", "goal_reads": 3, "read_label": "개념·문제 회독", "tips": ["히라가나·가타카나·동사 ます형 활용을 손으로 써서 정확도를 회복하자(서답형 4/30의 직접 원인).", "과·단원별 필수 어휘·문형을 뜻+예문으로 누적하고, 시험 범위 본문·회화 표현을 반복 노출하자.", "이번엔 컨디션·범위 마무리 시점을 앞당겨 '벼락치기 폭락'을 예방하자."], "approach": ["서답형(쓰기)은 가나·활용형을 또박또박 써서 표기 감점을 막고, 배점이 큰 만큼 먼저 푼다.", "선택형 어휘·문형·회화 응답은 헷갈리는 짝을 오답노트로 모아 반복한다."]}, {"name": "국어", "key": "kor", "level": "yellow", "weakness": "1학기 문학 2등급 A·편차 +9.2, 모의 국어 3회 연속 1등급의 확실한 강점 — 판정 부분 극복. 다만 지필은 중간 88.6→기말 77.4로 하락, 고배점 6문항에서 선지↔지문 근거 대조가 한 끗씩 흘렸다. 강점 유지 + 근거 대조만 조이자.", "goal_reads": 3, "read_label": "개념·문제 회독", "tips": ["교과서·프린트 밑줄을 출제 신호로 보고 정독하며 자습서와 대조하자. 학습활동 문제를 서술형으로 직접 답안 작성해 보자.", "작품마다 화자·서술 시점·표현법을 표로 정리해 선지 진술과 1:1로 대조하자(감상만으로 소거하지 않기).", "출판사 형성평가·기출 변형을 풀고 오답을 유형으로 재정리하자."], "approach": ["선지마다 지문 근거 구절에 밑줄을 긋고 대응시킨다 — 고배점일수록 근거 위치를 먼저 확정.", "관점·표현 비교 문항은 두 대상을 표로 대조한 뒤 선지와 맞춘다.", "선택형은 1차에 표시하는 속도로 끝내 서술형·고배점 검토 시간을 확보한다."]}], "weeks": [{"no": 1, "phase": "P1", "phase_name": "준비·다지기", "start": "2026-09-08", "end": "2026-09-14", "goal": "시험범위 확인 + 당일복습·누적복습 습관 적응", "weekday": [{"subject": "미적분2", "key": "math", "text": "시험범위 확인 + 당일복습(핵심문제 풀이·개념 정리)"}, {"subject": "영어", "key": "eng", "text": "시험범위 확인 + 당일복습(교과서·프린트 정독·간단한 암기)"}, {"subject": "대수", "key": "math", "text": "시험범위 확인 + 당일복습(핵심문제 풀이·개념 정리)"}, {"subject": "역학과 에너지", "key": "memo", "text": "시험범위 확인 + 당일복습(핵심문제 풀이·개념 정리)"}, {"subject": "일본어 회화", "key": "etc", "text": "시험범위 확인 + 당일복습(교과서·프린트 정독·간단한 암기)"}, {"subject": "국어", "key": "kor", "text": "시험범위 확인 + 당일복습(교과서·프린트 정독·간단한 암기)"}], "weekend": [{"subject": "미적분2", "key": "math", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}, {"subject": "영어", "key": "eng", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}, {"subject": "대수", "key": "math", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}, {"subject": "역학과 에너지", "key": "memo", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}, {"subject": "일본어 회화", "key": "etc", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}, {"subject": "국어", "key": "kor", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}], "weekday_label": "내용학습", "weekend_label": "누적복습·문제풀이"}, {"no": 2, "phase": "P2", "phase_name": "내용학습", "start": "2026-09-15", "end": "2026-09-21", "goal": "당일복습·누적 복습 습관화", "weekday": [{"subject": "미적분2", "key": "math", "text": "당일복습(핵심문제 풀이·개념 정리)"}, {"subject": "영어", "key": "eng", "text": "당일복습(교과서·프린트 정독·간단한 암기)"}, {"subject": "대수", "key": "math", "text": "당일복습(핵심문제 풀이·개념 정리)"}, {"subject": "역학과 에너지", "key": "memo", "text": "당일복습(핵심문제 풀이·개념 정리)"}, {"subject": "일본어 회화", "key": "etc", "text": "당일복습(교과서·프린트 정독·간단한 암기)"}, {"subject": "국어", "key": "kor", "text": "당일복습(교과서·프린트 정독·간단한 암기)"}], "weekend": [{"subject": "미적분2", "key": "math", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}, {"subject": "영어", "key": "eng", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}, {"subject": "대수", "key": "math", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}, {"subject": "역학과 에너지", "key": "memo", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}, {"subject": "일본어 회화", "key": "etc", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}, {"subject": "국어", "key": "kor", "text": "누적복습 + 문제풀이 + 문제 통해 개념 재정리"}], "weekday_label": "내용학습", "weekend_label": "누적복습·문제풀이"}, {"no": 3, "phase": "P3", "phase_name": "문제·오답·예습", "start": "2026-09-22", "end": "2026-09-28", "goal": "시험범위 1회독 완료(안 배운 뒷부분까지 미리) : 시험 직전까지 진도 나가는 경우가 많아 뒷부분 오답이 많아지는 것을 방지", "weekday": [{"subject": "미적분2", "key": "math", "text": "당일복습(핵심문제 풀이·개념 정리) + 예습"}, {"subject": "영어", "key": "eng", "text": "당일복습(교과서·프린트 정독·간단한 암기) + 예습"}, {"subject": "대수", "key": "math", "text": "당일복습(핵심문제 풀이·개념 정리) + 예습"}, {"subject": "역학과 에너지", "key": "memo", "text": "당일복습(핵심문제 풀이·개념 정리) + 예습"}, {"subject": "일본어 회화", "key": "etc", "text": "당일복습(교과서·프린트 정독·간단한 암기) + 예습"}, {"subject": "국어", "key": "kor", "text": "당일복습(교과서·프린트 정독·간단한 암기) + 예습"}], "weekend": [{"subject": "미적분2", "key": "math", "text": "시험범위 1회독 완료(예습 포함)"}, {"subject": "영어", "key": "eng", "text": "시험범위 1회독 완료(예습 포함)"}, {"subject": "대수", "key": "math", "text": "시험범위 1회독 완료(예습 포함)"}, {"subject": "역학과 에너지", "key": "memo", "text": "시험범위 1회독 완료(예습 포함)"}, {"subject": "일본어 회화", "key": "etc", "text": "시험범위 1회독 완료(예습 포함)"}, {"subject": "국어", "key": "kor", "text": "시험범위 1회독 완료(예습 포함)"}], "weekday_label": "내용학습", "weekend_label": "예습 통해 1회독 완료"}, {"no": 4, "phase": "P4", "phase_name": "총정리·실전 대비", "start": "2026-09-29", "end": "2026-10-05", "goal": "시험범위 전체 2~3회독 완료(주중 2회독, 시험 직전 3회독)·서술형 암기 확인·실전 대비", "weekday": [{"subject": "미적분2", "key": "math", "text": "주중 2회독, 선생님 말씀 유의하기"}, {"subject": "영어", "key": "eng", "text": "주중 2회독, 선생님 말씀 유의하기"}, {"subject": "대수", "key": "math", "text": "주중 2회독, 선생님 말씀 유의하기"}, {"subject": "역학과 에너지", "key": "memo", "text": "주중 2회독, 선생님 말씀 유의하기"}, {"subject": "일본어 회화", "key": "etc", "text": "주중 2회독, 선생님 말씀 유의하기"}, {"subject": "국어", "key": "kor", "text": "주중 2회독, 선생님 말씀 유의하기"}, {"subject": "해당과목", "key": "etc", "text": "서술형 대비, 암기"}], "weekend": [{"subject": "미적분2", "key": "math", "text": "시험범위 3회독 완료"}, {"subject": "영어", "key": "eng", "text": "시험범위 3회독 완료"}, {"subject": "대수", "key": "math", "text": "시험범위 3회독 완료"}, {"subject": "역학과 에너지", "key": "memo", "text": "시험범위 3회독 완료"}, {"subject": "일본어 회화", "key": "etc", "text": "시험범위 3회독 완료"}, {"subject": "국어", "key": "kor", "text": "시험범위 3회독 완료"}, {"subject": "해당과목", "key": "etc", "text": "서술형 대비, 암기"}], "weekday_label": "내용학습", "weekend_label": "마무리"}], "reads": [{"subject": "미적분2", "key": "math", "goal": 3, "label": "개념·문제 회독"}, {"subject": "영어", "key": "eng", "goal": 3, "label": "지문 학습(정독·이해)·문제 회독"}, {"subject": "대수", "key": "math", "goal": 3, "label": "개념·문제 회독"}, {"subject": "역학과 에너지", "key": "memo", "goal": 3, "label": "개념·문제 회독"}, {"subject": "일본어 회화", "key": "etc", "goal": 3, "label": "개념·문제 회독"}, {"subject": "국어", "key": "kor", "goal": 3, "label": "개념·문제 회독"}], "footer_note": ""};
+
+const SUBKEYS = ["eng","kor","math","memo","etc"];
+const PHASES = [{"code": "P1", "name": "준비"}, {"code": "P2", "name": "내용학습"}, {"code": "P3", "name": "문제·오답"}, {"code": "P4", "name": "실전·정리"}];
+const skey = k => SUBKEYS.includes(k) ? k : "etc";
+const esc = s => (s==null?"":String(s)).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const STORE = "naesin_" + (DATA.student||"student") + "_" + (DATA.exam_name||"exam");
+
+function today(){ const d=new Date(); d.setHours(0,0,0,0); return d; }
+function parseD(s){ const [y,m,d]=s.split("-").map(Number); const dt=new Date(y,m-1,d); dt.setHours(0,0,0,0); return dt; }
+function fmt(s){ const [y,m,d]=s.split("-").map(Number); return `${m}/${d}`; }
+function diffDays(a,b){ return Math.round((b-a)/86400000); }
+
+// ---- state ----
+let state = {name:"", weaknesses:{}, strengths:"", tasks:{}, reads:{}, note:""};
+try{ const raw=localStorage.getItem(STORE); if(raw) state=Object.assign(state,JSON.parse(raw)); }catch(e){}
+if(!state.name) state.name = DATA.student || "";
+let savedTimer=null;
+function save(){
+  try{ localStorage.setItem(STORE, JSON.stringify(state));
+    const el=document.getElementById("saved"); el.innerHTML='저장 중…'; clearTimeout(savedTimer);
+    savedTimer=setTimeout(()=>{ el.innerHTML='자동 저장 <b>✓</b>'; },500);
+  }catch(e){}
+}
+function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2600); }
+function curName(){ return (state.name||DATA.student||"학생").trim() || "학생"; }
+
+// ---- header ----
+document.getElementById("title").innerHTML = "<em>" + esc(DATA.exam_name||"내신 대비") + "</em>";
+const smeta=[DATA.grade,DATA.school,(DATA.course||"")+" 과정"].filter(Boolean).map(esc).join(" · ");
+document.getElementById("submeta").textContent = smeta;
+if(DATA.mode_note){ const m=document.getElementById("mode"); m.style.display="block"; m.textContent="⚠ "+DATA.mode_note; }
+if(DATA.consultant){ document.getElementById("eyebrow").textContent = "내신 카운트다운 · 담당 "+esc(DATA.consultant); }
+const nameInput=document.getElementById("nameInput");
+nameInput.value = state.name||"";
+function josaEul(name){
+  const c=(name||"").trim().slice(-1); if(!c) return "을(를)";
+  const code=c.charCodeAt(0);
+  if(code>=0xAC00 && code<=0xD7A3) return ((code-0xAC00)%28)?"을":"를";
+  return "을(를)";
+}
+function refreshName(){ const n=curName(); document.getElementById("tiptitle").textContent = n+josaEul(n)+" 위한 코치의 팁!"; }
+nameInput.addEventListener("input",()=>{ state.name=nameInput.value; refreshName(); save(); });
+
+function renderDday(){
+  const t=today(), ex=parseD(DATA.exam_start), n=diffDays(t,ex);
+  const el=document.getElementById("dday");
+  if(n>0) el.innerHTML="D-"+n+"<small> 일 남음</small>";
+  else if(n===0) el.innerHTML="D-DAY<small> 시험일</small>";
+  else el.innerHTML="D+"+(-n)+"<small> 시험 지남</small>";
+  document.getElementById("examdate").textContent = "시험 시작 "+fmt(DATA.exam_start);
+}
+function currentPhase(){
+  const t=today();
+  for(const w of DATA.weeks){ if(t>=parseD(w.start) && t<=parseD(w.end)) return w.phase; }
+  if(t < parseD(DATA.weeks[0].start)) return DATA.weeks[0].phase;
+  return DATA.weeks[DATA.weeks.length-1].phase;
+}
+function renderStepper(){
+  const cur=currentPhase(), curIdx=PHASES.findIndex(p=>p.code===cur);
+  document.getElementById("stepper").innerHTML = PHASES.map((p,i)=>{
+    const cls = p.code===cur ? "step on" : (i<curIdx ? "step done" : "step");
+    return `<div class="${cls}"><div class="pc">${p.code}</div><div class="pn">${esc(p.name)}</div></div>`;
+  }).join("");
+}
+function subColor(k){ return {eng:"var(--sub-eng)",kor:"var(--sub-kor)",math:"var(--sub-math)",memo:"var(--sub-memo)",etc:"var(--sub-etc)"}[skey(k)]; }
+
+// ---- read counters ----
+function renderReads(){
+  const wrap=document.getElementById("reads");
+  if(!DATA.reads||!DATA.reads.length){ return; }
+  document.getElementById("readstitle").style.display="flex";
+  wrap.innerHTML = DATA.reads.map((r,i)=>{
+    const id="r"+i, cur=state.reads[id]||0, full=cur>=r.goal;
+    return `<div class="readrow">
+      <div><div class="rname"><span class="dot" style="width:9px;height:9px;border-radius:99px;background:${subColor(r.key)}"></span>${esc(r.subject)}</div>
+      <div class="rlab">${esc(r.label||"회독")}</div></div>
+      <div class="rctl">
+        <button class="stepbtn" data-r="${id}" data-d="-1">−</button>
+        <div class="rcount ${full?'full':''}" id="rc-${id}"><b>${cur}</b> / ${r.goal}${full?' ✓':''}</div>
+        <button class="stepbtn" data-r="${id}" data-d="1">＋</button>
+      </div></div>`;
+  }).join("");
+  wrap.querySelectorAll(".stepbtn").forEach(b=>b.addEventListener("click",()=>{
+    const id=b.dataset.r, d=+b.dataset.d, goal=DATA.reads[+id.slice(1)].goal;
+    let v=(state.reads[id]||0)+d; if(v<0)v=0; if(v>goal+3)v=goal+3;
+    state.reads[id]=v; save();
+    const rc=document.getElementById("rc-"+id); const full=v>=goal;
+    rc.className="rcount "+(full?"full":""); rc.innerHTML=`<b>${v}</b> / ${goal}${full?' ✓':''}`;
+  }));
+}
+
+// ---- coach tips (with editable weakness) ----
+function renderTips(){
+  const subs=DATA.subjects||[];
+  document.getElementById("tips").innerHTML = subs.map((s,i)=>{
+    const lv = s.level==="red"?'<span class="lv lv-red">약점</span>':s.level==="yellow"?'<span class="lv lv-yellow">보완</span>':s.level==="green"?'<span class="lv lv-green">강점</span>':"";
+    const wkVal = (state.weaknesses && state.weaknesses[i]!=null) ? state.weaknesses[i] : (s.weakness||"");
+    const tipsHTML = (s.tips&&s.tips.length) ? `<div class="tiplab">💡 이렇게 공부하자</div><ul class="tiplist">${s.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>` : "";
+    const appHTML = (s.approach&&s.approach.length) ? `<div class="approach"><div class="ahd">🧭 이렇게 풀자 (풀이 접근)</div><ol>${s.approach.map(a=>`<li>${esc(a)}</li>`).join("")}</ol></div>` : "";
+    return `<div class="tipcard">
+      <div class="tiphead"><div class="tsubname"><span class="dot" style="width:10px;height:10px;border-radius:99px;background:${subColor(s.key)}"></span>${esc(s.name)}</div>${lv}</div>
+      <div class="wklabel">📌 나의 약점 · 보완할 점</div>
+      <textarea class="wkedit" data-wk="${i}" placeholder="약점을 적거나 고쳐 보세요">${esc(wkVal)}</textarea>
+      ${tipsHTML}${appHTML}
+    </div>`;
+  }).join("");
+  document.getElementById("tips").querySelectorAll(".wkedit").forEach(t=>{
+    t.addEventListener("input",()=>{ state.weaknesses[t.dataset.wk]=t.value; save(); });
+    t.addEventListener("input",autoGrow); autoGrow.call(t);
+  });
+}
+function autoGrow(){ this.style.height="auto"; this.style.height=(this.scrollHeight+2)+"px"; }
+
+// ---- weeks ----
+const CHECK='<svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const TASKMAP={};
+function taskHTML(t,wi,blk,ti){
+  const id=`t-${wi}-${blk}-${ti}`, done=!!state.tasks[id];
+  TASKMAP[id]={week:DATA.weeks[wi].no, blk:blk==="wd"?"주중":"주말", subject:t.subject, text:t.text};
+  return `<div class="task ${done?'done':''}" data-t="${id}">
+    <div class="cb">${CHECK}</div>
+    <span class="tsub s-${skey(t.key)}">${esc(t.subject)}</span>
+    <span class="ttext">${esc(t.text)}</span></div>`;
+}
+function isNowWeek(w){ const t=today(); return t>=parseD(w.start)&&t<=parseD(w.end); }
+function renderWeeks(){
+  const host=document.getElementById("weeks");
+  host.innerHTML = DATA.weeks.map((w,wi)=>{
+    const now=isNowWeek(w);
+    const wd=(w.weekday||[]).map((t,ti)=>taskHTML(t,wi,"wd",ti)).join("");
+    const we=(w.weekend||[]).map((t,ti)=>taskHTML(t,wi,"we",ti)).join("");
+    const ph=PHASES.find(p=>p.code===w.phase);
+    return `<div class="week ${now?'now':''}" id="wk-${wi}">
+      <div class="whead">
+        <span class="wno">${w.no}주차</span>
+        <span class="wdate">${fmt(w.start)}–${fmt(w.end)}</span>
+        <span class="wphase">${esc(w.phase_name||(ph?ph.name:w.phase))}</span>
+        ${now?'<span class="nowtag">이번 주</span>':''}
+        <span class="wrate" id="wr-${wi}"></span>
+      </div>
+      ${w.goal?`<div class="wgoal"><b>목표</b> · ${esc(w.goal)}</div>`:''}
+      ${wd?`<div class="block"><div class="blab"><span class="tag tag-wd">주중</span> ${esc(w.weekday_label||'내용학습')}</div>${wd}</div>`:''}
+      ${we?`<div class="block"><div class="blab"><span class="tag tag-we">주말</span> ${esc(w.weekend_label||'문제집 풀이')}</div>${we}</div>`:''}
+    </div>`;
+  }).join("");
+  host.querySelectorAll(".task").forEach(el=>el.addEventListener("click",()=>{
+    const id=el.dataset.t; state.tasks[id]=!state.tasks[id];
+    el.classList.toggle("done",state.tasks[id]); save(); updateProgress();
+  }));
+}
+function allTaskIds(){
+  const ids=[];
+  DATA.weeks.forEach((w,wi)=>{
+    (w.weekday||[]).forEach((_,ti)=>ids.push(`t-${wi}-wd-${ti}`));
+    (w.weekend||[]).forEach((_,ti)=>ids.push(`t-${wi}-we-${ti}`));
+  });
+  return ids;
+}
+function updateProgress(){
+  const ids=allTaskIds(), total=ids.length, done=ids.filter(i=>state.tasks[i]).length;
+  const pct= total? Math.round(done/total*100):0;
+  document.getElementById("pfill").style.width=pct+"%";
+  document.getElementById("ppct").textContent=pct+"%";
+  document.getElementById("pdetail").textContent=`${done} / ${total} 과제`;
+  DATA.weeks.forEach((w,wi)=>{
+    const wids=[]; (w.weekday||[]).forEach((_,ti)=>wids.push(`t-${wi}-wd-${ti}`));
+    (w.weekend||[]).forEach((_,ti)=>wids.push(`t-${wi}-we-${ti}`));
+    const d=wids.filter(i=>state.tasks[i]).length;
+    const el=document.getElementById("wr-"+wi); if(el) el.textContent= wids.length? `${d}/${wids.length}`:"";
+  });
+}
+
+// ---- editable strengths / note ----
+const strEl=document.getElementById("strengths");
+strEl.value=state.strengths||DATA.strengths||"";
+strEl.addEventListener("input",()=>{ state.strengths=strEl.value; save(); });
+const noteEl=document.getElementById("note");
+noteEl.value=state.note||"";
+noteEl.addEventListener("input",()=>{ state.note=noteEl.value; save(); });
+
+// ---- submit (export JSON) ----
+function buildSubmission(){
+  const ids=allTaskIds(), total=ids.length, done=ids.filter(i=>state.tasks[i]).length;
+  const weeks=DATA.weeks.map((w,wi)=>{
+    const wids=[]; (w.weekday||[]).forEach((_,ti)=>wids.push(`t-${wi}-wd-${ti}`));
+    (w.weekend||[]).forEach((_,ti)=>wids.push(`t-${wi}-we-${ti}`));
+    const d=wids.filter(i=>state.tasks[i]).length;
+    return {no:w.no, phase:w.phase, phase_name:w.phase_name||"", done:d, total:wids.length};
+  });
+  const reads=(DATA.reads||[]).map((r,i)=>({subject:r.subject,key:r.key,label:r.label||"회독",goal:r.goal,count:state.reads["r"+i]||0}));
+  const weaknesses=(DATA.subjects||[]).map((s,i)=>({subject:s.name,key:s.key,level:s.level||"",
+    weakness:(state.weaknesses&&state.weaknesses[i]!=null)?state.weaknesses[i]:(s.weakness||"")}));
+  const doneTasks=ids.filter(i=>state.tasks[i]).map(i=>TASKMAP[i]).filter(Boolean);
+  const undoneTasks=ids.filter(i=>!state.tasks[i]).map(i=>TASKMAP[i]).filter(Boolean);
+  return {
+    type:"naesin_countdown_submission", v:1,
+    student: curName(), exam_name:DATA.exam_name||"", exam_start:DATA.exam_start||"", course:DATA.course||"",
+    consultant: DATA.consultant||"", submitted_at: new Date().toISOString().slice(0,10),
+    summary:{ done, total, pct: total?Math.round(done/total*100):0, weeks, reads },
+    weaknesses, strengths: state.strengths||DATA.strengths||"", note: state.note||"",
+    done_tasks: doneTasks, undone_tasks: undoneTasks
+  };
+}
+function download(name, obj){
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+document.getElementById("submit").addEventListener("click",()=>{
+  if(!curName() || curName()==="학생"){ if(!confirm("이름이 비어 있어요. 그래도 만들까요?")) { nameInput.focus(); return; } }
+  const sub=buildSubmission();
+  const fname=`[제출]_${curName()}_내신카운트다운.json`;
+  download(fname, sub);
+  toast("제출 파일을 만들었어요! 코치쌤께 보내 주세요 📤");
+});
+
+// ---- reset ----
+document.getElementById("reset").addEventListener("click",()=>{
+  if(confirm("모든 체크·회독·약점 메모를 초기화할까요? (되돌릴 수 없어요)")){
+    state={name:DATA.student||"",weaknesses:{},strengths:"",tasks:{},reads:{},note:""};
+    try{localStorage.removeItem(STORE);}catch(e){}
+    location.reload();
+  }
+});
+
+// ---- init ----
+refreshName(); renderDday(); renderStepper(); renderReads(); renderTips(); renderWeeks(); updateProgress();
+const nowIdx=DATA.weeks.findIndex(isNowWeek);
+if(nowIdx>=0){ setTimeout(()=>{ const el=document.getElementById("wk-"+nowIdx); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); },400); }
+</script>
+</body>
+</html>
